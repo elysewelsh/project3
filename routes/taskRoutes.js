@@ -57,11 +57,14 @@ router.put('/tasks/:taskId', async (req, res) => {
   }
 });
 
-router.delete('/tasks/taskId', async (req, res) => {
+router.delete('/tasks/:taskId', async (req, res) => {
   try {
 const task = await Task.findById(req.params.taskId);
     const projectField = task.project;
     const project = await Project.findById(projectField);
+    if (!project) {
+        return res.status(404).json({ message: 'No project affiliated with this task!' });
+    }
     if (req.user._id != project.user) {
         return res.status(403).json({ message: 'User forbidden from deleting this task' });
     }
