@@ -39,4 +39,40 @@ router.get('/projects/:projectId/tasks', async (req, res) => {
   }
 });
 
+router.put('/tasks/:taskId', async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.taskId);
+    const projectField = task.project;
+    const project = await Project.findById(projectField);
+    if (req.user._id != project.user) {
+        return res.status(403).json({ message: 'User forbidden from updating this task' });
+    }
+    if (!task) {
+      return res.status(404).json({ message: 'No task found with this id!' });
+    }
+    const updateTask = await Task.findByIdAndUpdate(req.params.taskId, req.body, {returnDocument: 'after'});
+    res.json(updateTask);
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+router.delete('/tasks/taskId', async (req, res) => {
+  try {
+const task = await Task.findById(req.params.taskId);
+    const projectField = task.project;
+    const project = await Project.findById(projectField);
+    if (req.user._id != project.user) {
+        return res.status(403).json({ message: 'User forbidden from deleting this task' });
+    }
+    if (!task) {
+      return res.status(404).json({ message: 'No task found with this id!' });
+    }
+    const deleteTask = await Task.findByIdAndDelete(req.params.taskId);
+    res.json({ message: `Task ID ${deleteTask._id} deleted!` });
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
 export default router

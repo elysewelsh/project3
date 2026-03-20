@@ -3,6 +3,7 @@ import express from 'express'
 const router = express.Router()
 
 import Project from '../models/Project.js'
+import Task from '../models/Task.js'
 import { authMiddleware } from '../utils/auth.js'
  
 // Apply authMiddleware to all routes in this file
@@ -65,17 +66,23 @@ router.put('/:id', async (req, res) => {
 // DELETE /api/projects/:id - Delete a project
 router.delete('/:id', async (req, res) => {
   try {
-    const project = await Project.findById(req.params.id);
-    if (req.user._id != project.user) {
-        return res.status(403).json({ message: 'User forbidden from deleting this project' });
-    }
-    if (!project) {
+    const parentProject = await Project.findById(req.params.id);
+    if (!parentProject) {
       return res.status(404).json({ message: 'No project found with this id!' });
     }
+    if (req.user._id != parentProject.user) {
+        return res.status(403).json({ message: 'User forbidden from deleting this project' });
+    }
+    // const tasks = await Task.find({
+    //     project: {$eq: req.params.id}
+    // })
+    // console.log(tasks);
     const deleteProject = await Project.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Project deleted!' });
+    const deleteTasks = await Task.deleteMany({ project: { $eq: req.params.id}});
+    res.json({ message: `Project ID ${deleteProject._id} deleted! ${deleteTasks.deletedCount} task(s) deleted as well` });
   } catch (err) {
     res.status(500).json(err);
+    console.error(err);
   }
 });
  
